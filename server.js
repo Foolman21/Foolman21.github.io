@@ -59,6 +59,23 @@ const listener = server.listen(process.env.PORT, function() {
 function getConversationKey(user1, user2) {
   return [user1, user2].sort().join('_');
 }
+function getFriendSocket(from, to) {
+  const conversationKey = getConversationKey(from, to);
+  const conversation = conversations[conversationKey];
+  if (!conversation) {
+    return null;
+  }
+  for (const socket of conversation) {
+    if (socket.readyState === WebSocket.OPEN) {
+      const url = new URL(socket.upgradeReq.url, 'https://foolman21.github.io/');
+      const username = url.searchParams.get('username');
+      if (username === to) {
+        return socket;
+      }
+    }
+  }
+  return null;
+}
 
 function getFriendSocket(from, to) {
   const conversationKey = getConversationKey(from, to);
