@@ -5,39 +5,69 @@
   </head>
   <body>
     <h1>Online Chat</h1>
-    <p>Logged in as: <span id="username"></span></p>
-    <form>
-      <label for="friend">Friend:</label>
-      <input type="text" id="friend" name="friend" required>
-      <label for="message">Message:</label>
-      <input type="text" id="message" name="message" required>
-      <button type="submit">Send</button>
-    </form>
+    <div id="username-container">
+      <label for="username">Enter your username:</label>
+      <input type="text" id="username" name="username" required>
+      <button id="username-btn">Join Chat Room</button>
+    </div>
+    <div id="chatroom-container" style="display: none;">
+      <h2>Chat Room</h2>
+      <p>Logged in as: <span id="loggedin-username"></span></p>
+      <form>
+        <label for="friend">Friend:</label>
+        <input type="text" id="friend" name="friend" required>
+        <label for="message">Message:</label>
+        <input type="text" id="message" name="message" required>
+        <button type="submit">Send</button>
+      </form>
+      <ul id="messages"></ul>
+    </div>
 
     <script>
-      const username = localStorage.getItem('username');
-      document.querySelector('#username').textContent = username;
+      let username;
+      let friend;
+      const socket = new WebSocket(`wss://${window.location.hostname}`);
 
+      const usernameContainer = document.querySelector('#username-container');
+      const usernameInput = document.querySelector('#username');
+      const usernameBtn = document.querySelector('#username-btn');
+      const chatroomContainer = document.querySelector('#chatroom-container');
+      const loggedinUsername = document.querySelector('#loggedin-username');
       const form = document.querySelector('form');
+      const messages = document.querySelector('#messages');
+
       form.addEventListener('submit', (event) => {
         event.preventDefault();
-        const friend = document.querySelector('#friend').value;
         const message = document.querySelector('#message').value;
-
-        const socket = new WebSocket(`wss://${window.location.hostname}`);
-        socket.addEventListener('open', (event) => {
-          socket.send(JSON.stringify({
-            from: username,
-            to: friend,
-            message: message
-          }));
-        });
-
-        socket.addEventListener('message', (event) => {
-          const messageData = JSON.parse(event.data);
-          console.log(messageData.from + ': ' + messageData.message);
-        });
+        socket.send(JSON.stringify({
+          from: username,
+          to: friend,
+          message: message
+        }));
+        const messageEl = document.createElement('li');
+        messageEl.textContent = `${username}: ${message}`;
+        messages.appendChild(messageEl);
+        document.querySelector('#message').value = '';
       });
+
+      usernameBtn.addEventListener('click', () => {
+        username = usernameInput.value.trim();
+        if (username) {
+          usernameContainer.style.display = 'none';
+          chatroomContainer.style.display = 'block';
+          loggedinUsername.textContent = username;
+        }
+      });
+
+      socket.addEventListener('message', (event) => {
+        const messageData = JSON.parse(event.data);
+        if (messageData.to === username) {
+          const messageEl = document.createElement('li');
+          messageEl.textContent = `${messageData.from}: ${messageData.message}`;
+          messages.appendChild(messageEl);
+        }
+      });
+
     </script>
   </body>
 </html>
