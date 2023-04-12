@@ -10,7 +10,7 @@ const clients = new Map();
 const conversations = {};
 
 wss.on('connection', (ws, req) => {
-  const url = new URL(req.url, 'https://example.com');
+  const url = new URL(req.url, 'https://foolman21.github.io/');
   const username = url.searchParams.get('username');
   const friend = url.searchParams.get('friend');
   const conversationKey = getConversationKey(username, friend);
