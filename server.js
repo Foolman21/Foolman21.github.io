@@ -9,11 +9,20 @@ const wss = new WebSocket.Server({ server });
 const clients = new Map();
 const conversations = {};
 
-wss.on('connection', (ws, req) => {
-  const url = new URL(req.url, 'https://foolman21.github.io/');
-  const username = url.searchParams.get('username');
-  const friend = url.searchParams.get('friend');
-  const conversationKey = getConversationKey(username, friend);
+ws.on('message', (data) => {
+  const messageData = JSON.parse(data);
+  const friendSocket = getFriendSocket(messageData.from, messageData.to);
+  if (friendSocket && friendSocket.readyState === WebSocket.OPEN) {
+    const url = new URL(friendSocket.upgradeReq.url, 'https://foolman21.github.io/');
+    const friendUsername = url.searchParams.get('username');
+    if (friendUsername === messageData.to) {
+      friendSocket.send(JSON.stringify({
+        from: messageData.from,
+        message: messageData.message
+      }));
+    }
+  }
+});
 
   // Create a new conversation if it doesn't exist
   if (!conversations[conversationKey]) {
