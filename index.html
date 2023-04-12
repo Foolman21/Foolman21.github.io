@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Online Chat</title>
+  </head>
+  <body>
+    <h1>Online Chat</h1>
+    <p>Logged in as: <span id="username"></span></p>
+    <form>
+      <label for="friend">Friend:</label>
+      <input type="text" id="friend" name="friend" required>
+      <label for="message">Message:</label>
+      <input type="text" id="message" name="message" required>
+      <button type="submit">Send</button>
+    </form>
+
+    <script>
+      const username = localStorage.getItem('username');
+      document.querySelector('#username').textContent = username;
+
+      const form = document.querySelector('form');
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const friend = document.querySelector('#friend').value;
+        const message = document.querySelector('#message').value;
+
+        const socket = new WebSocket(`wss://${window.location.hostname}`);
+        socket.addEventListener('open', (event) => {
+          socket.send(JSON.stringify({
+            from: username,
+            to: friend,
+            message: message
+          }));
+        });
+
+        socket.addEventListener('message', (event) => {
+          const messageData = JSON.parse(event.data);
+          console.log(messageData.from + ': ' + messageData.message);
+        });
+      });
+    </script>
+  </body>
+</html>
